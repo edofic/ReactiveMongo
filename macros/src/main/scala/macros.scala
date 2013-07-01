@@ -167,7 +167,10 @@ private object MacroImpl {
     private def writeBodyConstructSingleton(A: c.Type): c.Tree = {
       val expr =classNameTree(A) map { className =>
         val nameE = c.Expr[(String, BSONString)](className)
-        reify{ BSONDocument(Seq((nameE.splice))) }
+        reify{
+          val (key, BSONString(className)) = nameE.splice
+          BSONDocument(Seq((key, BSONString(className.stripSuffix("$")))))
+        }
       } getOrElse reify{ BSONDocument.empty }
       expr.tree
     }
