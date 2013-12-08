@@ -1,7 +1,7 @@
 import reactivemongo.bson._
 import org.specs2.mutable._
 import reactivemongo.bson.exceptions.DocumentKeyNotFound
-import reactivemongo.bson.Macros.Annotations.Key
+
 
 class Macros extends Specification {
   type Handler[A] = BSONDocumentReader[A] with BSONDocumentWriter[A]  with BSONHandler[BSONDocument, A]
@@ -25,7 +25,16 @@ class Macros extends Specification {
   case class WordLover(name: String, words: Seq[String])
   case class Empty()
   object EmptyObject
-  case class RenamedId(@Key("_id") myID: BSONObjectID = BSONObjectID.generate, value: String)
+
+  object Rename {
+    import reactivemongo.bson.Macros.Annotations.Key
+    import scala.annotation.StaticAnnotation
+    import scala.annotation.meta.param
+    @param class DummyAnnotation extends StaticAnnotation
+    case class RenamedId(@Key("_id") myID: BSONObjectID = BSONObjectID.generate, @DummyAnnotation value: String)
+  }
+
+
 
   object Nest {
     case class Nested(name: String)
@@ -248,6 +257,7 @@ class Macros extends Specification {
     }
 
     "support overriding keys with annotations" in {
+      import Rename._
       implicit val format = Macros.handler[RenamedId]
       val doc = RenamedId(value = "some value")
       val serialized = format write doc
